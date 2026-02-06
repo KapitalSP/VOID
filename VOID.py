@@ -1,4 +1,5 @@
-﻿import os
+#!/usr/bin/env python3
+import os
 import sys
 import subprocess
 import platform
@@ -140,3 +141,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
