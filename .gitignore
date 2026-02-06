@@ -1,0 +1,11 @@
+# Ignore Engine Files (Too heavy)
+models/*.gguf
+models/*.bin
+
+# Ignore Personal Logs (Privacy)
+logs/*
+!logs/.gitkeep
+
+# Ignore System Files
+__pycache__/
+*.pyc
