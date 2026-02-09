@@ -50,4 +50,5 @@ bash void.sh
 Stop renting intelligence. Start owning it.
 
 
-Execute:
+
+
