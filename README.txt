@@ -1,83 +1,154 @@
-VOID — Hybrid AI Chassis
+VOID
 
-VOID is not an AI model.
-VOID is not an AI engine.
+VOID is a chassis for running AI engines — not an engine itself.
 
-VOID is a chassis —
-a structural runtime designed to mount, switch, and operate AI engines.
+VOID provides a minimal, transparent structure for running local GGUF models or switching to remote APIs using a single, consistent interface. It is designed to stay out of the way and expose control rather than hide it.
+
+What is VOID?
+
+VOID is a zero-friction execution chassis for AI inference.
+
+It does not train models, does not modify inference logic, and does not attempt to optimize performance by itself. Instead, it focuses on:
+
+Detecting available engines automatically
+
+Providing a stable execution structure
+
+Allowing local and remote inference to coexist
+
+Avoiding heavy abstractions and hidden behavior
+
+Think of VOID as the frame that holds the engine — not the engine.
 
 Why VOID Exists
 
-The AI ecosystem is dominated by large engine providers.
-They build powerful engines — but the surrounding structure is often:
+Most AI tooling today assumes one of two extremes:
 
-closed
+Beginner-friendly tools that hide all internals
 
-inflexible
+Large frameworks that require deep integration
 
-tightly coupled to vendors
+VOID exists for users who want neither.
 
-On the other hand, local AI offers:
+It is built for people who:
 
-full control
+Understand what an engine is
 
-privacy
+Want direct control over execution
 
-engine freedom
+Prefer simple, inspectable code
 
-…but lacks a clean, reusable execution structure.
+Intend to build their own systems on top
 
-VOID exists to fill that gap.
+VOID does not try to be convenient for everyone. It tries to be honest for the right users.
 
-A hybrid AI chassis that connects local GGUF models and remote APIs
-under a single, minimal runtime.
+Who Is This For?
 
-Engines can change.
-The chassis should not.
-
-Who VOID Is For
-
-VOID is not beginner-friendly by design.
+VOID is not designed for AI beginners.
 
 This project assumes you already:
 
-have run local LLMs before
+Know what GGUF models are
 
-understand CLI or API-based inference
+Understand local inference vs API-based inference
 
-are capable of assembling your own AI stack
+Are comfortable configuring engines and models manually
 
-If you’re at that level, VOID becomes a solid structural base
-to build your own AI system on top of.
+If you can already assemble your own AI stack, VOID gives you a clean base to do it faster and more transparently.
 
-If not, VOID will feel difficult —
-and that is intentional.
+What VOID Is NOT
+
+VOID is not:
+
+an AI model
+
+an inference engine
+
+a performance optimizer
+
+a replacement for llama.cpp or hosted APIs
+
+VOID does not improve model quality. VOID does not magically speed things up.
+
+If something is slow in VOID, it would be slow elsewhere too.
+
+Performance Notes
+
+VOID itself does not optimize inference speed or model performance.
+
+All performance characteristics depend on:
+
+the selected engine (e.g. llama.cpp or a remote API)
+
+the chosen model architecture and size
+
+the underlying hardware
+
+VOID’s role is to:
+
+expose engine parameters clearly
+
+avoid hidden abstraction layers
+
+allow direct performance control
+
+VOID does not promise performance. It promises transparency.
 
 Core Features
 
-Hybrid Mode
+Local GGUF inference via llama.cpp
 
-Switch between local GGUF inference and remote API inference
+Remote API mode (OpenAI-compatible)
 
-OpenAI-compatible API
+Runtime switching between local and remote modes
 
-/chat endpoint compatible with standard Chat Completion workflows
+Minimal dependency footprint
 
-Local Engine Support
+Simple HTTP API for integration
 
-llama-cli + .gguf models
+Mobile-friendly (Termux / Android)
 
-Minimal & Lightweight
+Architecture Overview
 
-Pure Python
+Engine layer: external (llama.cpp, API providers)
 
-No heavy dependencies
+Model layer: user-supplied (GGUF or remote)
 
-Easy to inspect, modify, extend
+VOID layer: execution chassis and interface
 
-Usage Overview
-Local Mode
+VOID intentionally avoids merging these layers.
 
+Basic Usage
+
+Place a GGUF model in the models/ directory
+
+Place the engine binary in drivers/ or ensure it is in PATH
+
+Run the server
+
+Access the UI or call the HTTP API
+
+Remote mode can be enabled by updating the configuration.
+
+Design Philosophy
+
+Simple code over clever code
+
+Explicit control over automation
+
+No silent behavior
+
+No unnecessary abstractions
+
+VOID is meant to be modified. If you want to change it, you probably should.
+
+Final Notes
+
+VOID is a chassis.
+
+Engines evolve. Models change. Hardware improves.
+
+VOID stays still — so the rest can move freely.
 Place .gguf model files in /models
 
 Place llama-cli binary in /drivers
@@ -163,3 +234,4 @@ One Sentence Summary
 
 VOID is not an AI.
 It’s the structure that lets you build one.
+
