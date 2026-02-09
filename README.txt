@@ -1,54 +1,50 @@
-VOID
-The Universal Monolith. One File. Any Device. Infinite Intelligence.
+VOID: The Hybrid AI Chassis (v22.0)
+VOID is a lightweight, zero-dependency AI infrastructure designed to run anywhere—from high-end PCs to Android phones. It features a unique Hybrid Switching system that lets you toggle between local hardware and cloud intelligence with a single click.
 
-🌑 Manifesto
-Zero Dependencies: No pip install. No venv. Just Python.
+✨ Key Features
+Hybrid Engine: Seamlessly switch between Local GGUF (via llama.cpp) and Remote API (OpenAI compatible).
 
-Adaptive Core: Automatically scales from Mobile Safe-Mode to PC Distributed-Computing.
+Zero Dependency: Runs on pure Python 3. No pip install required.
 
-Self-Healing: Auto-installs missing engines (Termux) and auto-corrects permissions.
+Auto-Bootstrap: Automatically generates /drivers, /models, and /plugins folders on first run.
 
-📂 Architecture
+Cross-Platform: Native support for Windows, Linux, macOS, and Android (Termux).
+
+OpenAI Compatible: Acts as a standard API gateway for other AI tools and clients.
+
+📂 Project Structure
+Just run void.py, and the chassis will build itself:
 VOID/
-├── void.py              # The Brain (Run this)
-├── models/              # The Mind  (Drop .gguf here)
-└── drivers/             # The Heart (Drop executables here)
+├── drivers/    <- Place llama-cli / llama-cli.exe here
+├── models/     <- Place your .gguf model files here
+├── plugins/    <- Place community-made .py plugins here
+└── void.py     <- The core engine
 
-🚀 Ignite
-1. Materialize
-Download the VOID folder.
+🚀 Quick Start
+1. Initial Setup
+Run the script once to generate the directory structure.
+python void.py
 
-2. Fill the Void
-Models: Place your .gguf file in /models.
+2. Fueling the Engine
+For Local Mode: Download a .gguf model and place it in the /models folder.
 
-Drivers:
+For Remote Mode: Open void.py and enter your API Key in the CONFIG section.
 
-PC: Place llama-cli.exe (Win) or llama-cli (Mac/Linux) in /drivers.
+3. Ignition
+Run the script again and open the provided URL (default: http://localhost:8080) in your browser.
+python void.py
 
-Mobile: Do nothing. VOID auto-installs the engine on Termux.
+🔧 ConfigurationYou can easily modify the behavior in the CONFIG object:KeyDescriptionDefaultmodeSwitch between local or remote"local"api_urlEndpoint for remote intelligenceOpenAI Standardmodel_nameModel ID for Remote API"gpt-3.5-turbo"
 
-3. Run
-Windows: Double-click start.bat
+🏺 The Workshop (Market)
+VOID is designed to be extensible. Our community-driven Market allows you to download specialized plugins to enhance your chassis.
 
-Android: Type bash void.sh
+Contribute: Submit a Pull Request to the central repository to share your own plugins.
 
-Mac/Linux: Type python3 void.py
+Security: Every plugin in the market is reviewed by our global maintainer team.
 
-📱 Mobile Native (Termux)
-VOID transforms your phone into a local AI server.
+🛡️ License
+Distributed under the MIT License. See LICENSE for more information.
 
-Copy VOID folder to internal storage.
-
-Open Termux.
-
-Execute:
-cd storage/shared/VOID
-bash void.sh
-
-(The system will auto-detect Android, install dependencies, and launch the Neural Interface.)
-
-Stop renting intelligence. Start owning it.
-
-
-
-
+💡 Pro Tip for Developers
+You can use VOID as a Headless API Server. Just point your favorite AI client (like Chatbox or TypingMind) to http://YOUR_IP:8080/v1 and enjoy the hybrid power without the UI.
