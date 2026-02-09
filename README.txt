@@ -1,53 +1,165 @@
-“VOID is not an AI. It’s a chassis for AI engines.”
+VOID — Hybrid AI Chassis
 
-VOID: The Hybrid AI Chassis (v22.0)
-VOID is a lightweight, zero-dependency AI infrastructure designed to run anywhere—from high-end PCs to Android phones. It features a unique Hybrid Switching system that lets you toggle between local hardware and cloud intelligence with a single click.
+VOID is not an AI model.
+VOID is not an AI engine.
 
-✨ Key Features
-Hybrid Engine: Seamlessly switch between Local GGUF (via llama.cpp) and Remote API (OpenAI compatible).
+VOID is a chassis —
+a structural runtime designed to mount, switch, and operate AI engines.
 
-Zero Dependency: Runs on pure Python 3. No pip install required.
+Why VOID Exists
 
-Auto-Bootstrap: Automatically generates /drivers, /models, and /plugins folders on first run.
+The AI ecosystem is dominated by large engine providers.
+They build powerful engines — but the surrounding structure is often:
 
-Cross-Platform: Native support for Windows, Linux, macOS, and Android (Termux).
+closed
 
-OpenAI Compatible: Acts as a standard API gateway for other AI tools and clients.
+inflexible
 
-📂 Project Structure
-Just run void.py, and the chassis will build itself:
-VOID/
-├── drivers/    <- Place llama-cli / llama-cli.exe here
-├── models/     <- Place your .gguf model files here
-├── plugins/    <- Place community-made .py plugins here
-└── void.py     <- The core engine
+tightly coupled to vendors
 
-🚀 Quick Start
-1. Initial Setup
-Run the script once to generate the directory structure.
+On the other hand, local AI offers:
+
+full control
+
+privacy
+
+engine freedom
+
+…but lacks a clean, reusable execution structure.
+
+VOID exists to fill that gap.
+
+A hybrid AI chassis that connects local GGUF models and remote APIs
+under a single, minimal runtime.
+
+Engines can change.
+The chassis should not.
+
+Who VOID Is For
+
+VOID is not beginner-friendly by design.
+
+This project assumes you already:
+
+have run local LLMs before
+
+understand CLI or API-based inference
+
+are capable of assembling your own AI stack
+
+If you’re at that level, VOID becomes a solid structural base
+to build your own AI system on top of.
+
+If not, VOID will feel difficult —
+and that is intentional.
+
+Core Features
+
+Hybrid Mode
+
+Switch between local GGUF inference and remote API inference
+
+OpenAI-compatible API
+
+/chat endpoint compatible with standard Chat Completion workflows
+
+Local Engine Support
+
+llama-cli + .gguf models
+
+Minimal & Lightweight
+
+Pure Python
+
+No heavy dependencies
+
+Easy to inspect, modify, extend
+
+Usage Overview
+Local Mode
+
+Place .gguf model files in /models
+
+Place llama-cli binary in /drivers
+
+Run VOID
+
+Use local inference immediately
+
+Remote Mode
+
+Set your API key
+
+Switch mode via /config
+
+Use standard API-based inference
+
+The interface stays the same.
+Only the engine changes.
+
+Design Philosophy
+
+Engines evolve
+→ The chassis must remain stable.
+
+Personal computing upper bound ≈ 100B
+→ Designed to be practical for individuals, not data centers.
+
+Loose but scalable
+→ Stable by default, modifiable for those who want to push limits.
+
+VOID is intentionally relaxed in structure —
+so others can “overbuild” it if they want.
+
+BASIC vs VOID
+
+BASIC
+
+Server-grade
+
+Large-scale
+
+Heavy and rigid
+
+Not publicly released
+
+VOID
+
+Personal / local-first
+
+Hybrid execution
+
+Lightweight and open
+
+Built to be shared
+
+VOID is a derivative of BASIC,
+refactored into a usable public chassis.
+
+Market & Community
+
+VOID is not meant to stay isolated.
+
+The long-term idea is:
+
+shared presets
+
+plugins
+
+configurations
+
+markets built around the chassis
+
+Even if VOID itself doesn’t make money,
+ecosystems always do.
+
+Quick Start
+git clone https://github.com/KapitalSP/VOID
+cd VOID
 python void.py
 
-2. Fueling the Engine
-For Local Mode: Download a .gguf model and place it in the /models folder.
 
-For Remote Mode: Open void.py and enter your API Key in the CONFIG section.
+One Sentence Summary
 
-3. Ignition
-Run the script again and open the provided URL (default: http://localhost:8080) in your browser.
-python void.py
-
-🔧 ConfigurationYou can easily modify the behavior in the CONFIG object:KeyDescriptionDefaultmodeSwitch between local or remote"local"api_urlEndpoint for remote intelligenceOpenAI Standardmodel_nameModel ID for Remote API"gpt-3.5-turbo"
-
-🏺 The Workshop (Market)
-VOID is designed to be extensible. Our community-driven Market allows you to download specialized plugins to enhance your chassis.
-
-Contribute: Submit a Pull Request to the central repository to share your own plugins.
-
-Security: Every plugin in the market is reviewed by our global maintainer team.
-
-🛡️ License
-Distributed under the MIT License. See LICENSE for more information.
-
-💡 Pro Tip for Developers
-You can use VOID as a Headless API Server. Just point your favorite AI client (like Chatbox or TypingMind) to http://YOUR_IP:8080/v1 and enjoy the hybrid power without the UI.
-
+VOID is not an AI.
+It’s the structure that lets you build one.
