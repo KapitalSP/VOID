@@ -1,3 +1,5 @@
+“VOID is not an AI. It’s a chassis for AI engines.”
+
 VOID: The Hybrid AI Chassis (v22.0)
 VOID is a lightweight, zero-dependency AI infrastructure designed to run anywhere—from high-end PCs to Android phones. It features a unique Hybrid Switching system that lets you toggle between local hardware and cloud intelligence with a single click.
 
@@ -48,3 +50,4 @@ Distributed under the MIT License. See LICENSE for more information.
 
 💡 Pro Tip for Developers
 You can use VOID as a Headless API Server. Just point your favorite AI client (like Chatbox or TypingMind) to http://YOUR_IP:8080/v1 and enjoy the hybrid power without the UI.
+
