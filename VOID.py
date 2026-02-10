@@ -1,185 +1,293 @@
-import os, sys, subprocess, platform, json, socket, time, threading, shutil, urllib.request
-from http.server import HTTPServer, BaseHTTPRequestHandler
+"""
+PROJECT VOID : The Zero-Dependency AI Chassis
+Version: 1.0.0 (Official Release)
+Author: R2 & Gemini
+License: MIT License
+"""
 
-# ==============================================================================
-# 🌑 VOID v22.0 [HYBRID CHASSIS]
-# Features: Local GGUF + Remote API Switcher, OpenAI Standard, Market Sync
-# ==============================================================================
+import os
+import sys
+import json
+import time
+import subprocess
+import threading
+import urllib.request
+import http.server
+from socketserver import ThreadingMixIn
 
-PORT = 8080
-ROOT = os.path.dirname(os.path.abspath(__file__))
-IS_MOBILE = 'android' in os.environ.get('PREFIX', '') or 'termux' in str(os.environ)
+# ==========================================
+# [CORE] CONFIGURATION & CONSTANTS
+# ==========================================
+VERSION = "v1.0.0 (Official)"
+CONFIG_FILE = "config.json"
 
-# [Configuration] - Can be modified via UI or config.json later
-CONFIG = {
-    "mode": "local", # Options: "local" or "remote"
-    "api_key": "your-api-key-here",
-    "api_url": "https://api.openai.com/v1/chat/completions",
-    "model_name": "gpt-3.5-turbo" # Used for remote mode
+# Default Configuration
+DEFAULT_CONFIG = {
+    "api_key": "sk-placeholder",
+    "model_path": "models/llama-3-8b.gguf",
+    "driver_path": "drivers/llama-cli",   # Path to local inference engine
+    "gpu_layers": 33,                     # -ngl (GPU offload)
+    "ctx_size": 4096,                     # -c (Context window)
+    "threads": 8,                         # -t (CPU threads)
+    "mode": "hybrid",                     # 'local' or 'api'
+    "system_prompt": "You are VOID, an advanced AI chassis."
 }
 
-class HybridCore:
-    def __init__(self):
-        self.init_folders()
-        self.bin, self.model = self.scan()
+# Global State
+config = {}
+server_status = "Stopped"
 
-    def init_folders(self):
-        """Create folder structure (Auto-Bootstrap)"""
-        for d in ['drivers', 'models', 'plugins']:
-            os.makedirs(os.path.join(ROOT, d), exist_ok=True)
+# ==========================================
+# [MODULE 1] SYSTEM UTILS & BOOTSTRAP
+# ==========================================
+def cls():
+    """Clear console screen cross-platform."""
+    os.system('cls' if os.name == 'nt' else 'clear')
 
-    def scan(self):
-        # 1. Android (Termux) Auto-Setup
-        if IS_MOBILE:
-            try: subprocess.run(['llama-cli', '-v'], stdout=subprocess.DEVNULL)
-            except: 
-                print(" [VOID] Installing dependencies for Android...")
-                os.system("pkg install -y llama-cpp")
-            return "llama-cli", self._find_model()
+def load_config():
+    """Load config.json or create it with defaults."""
+    global config
+    
+    # Auto-Bootstrap: Create necessary directories
+    for folder in ["models", "drivers", "plugins", "logs"]:
+        os.makedirs(folder, exist_ok=True)
+
+    if not os.path.exists(CONFIG_FILE):
+        config = DEFAULT_CONFIG.copy()
+        save_config()
+    else:
+        try:
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        except:
+            print("[System] Config file corrupted. Resetting.")
+            config = DEFAULT_CONFIG.copy()
+            save_config()
+
+def save_config():
+    """Save current memory state to config.json."""
+    with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+        json.dump(config, f, indent=4)
+
+# ==========================================
+# [MODULE 2] INFERENCE ENGINE (Streaming)
+# ==========================================
+def stream_inference(prompt):
+    """
+    Generator function that yields output token by token.
+    Crucial for large models (100B+) to avoid timeouts.
+    """
+    if config['mode'] == 'local':
+        # [LOCAL MODE] - Subprocess Streaming
+        driver = config['driver_path']
         
-        # 2. PC Engine Detection
-        sys_os = platform.system()
-        fname = "llama-cli.exe" if sys_os == 'Windows' else "llama-cli-mac" if sys_os == 'Darwin' else "llama-cli-linux"
-        path = os.path.join(ROOT, 'drivers', fname)
-        
-        if os.path.exists(path):
-            if sys_os != 'Windows': os.chmod(path, 0o755) # Grant execution permission
-            return path, self._find_model()
+        # Check if driver exists (auto-append .exe for Windows)
+        if os.name == 'nt' and not driver.endswith('.exe'):
+            driver += ".exe"
             
-        # Check System PATH
-        if shutil.which("llama-cli"): 
-            return "llama-cli", self._find_model()
+        if not os.path.exists(driver):
+            yield f"[Error] Driver not found: {driver}\nPlease put 'llama-cli' in drivers/ folder."
+            return
 
-        print(f"\n [!] ENGINE MISSING: Please place '{fname}' in /drivers")
-        print(f" [!] Download from: https://github.com/ggerganov/llama.cpp/releases\n")
-        return None, self._find_model()
-
-    def _find_model(self):
-        """Search for the first available .gguf file in /models"""
-        m_path = os.path.join(ROOT, 'models')
-        try: 
-            return os.path.join(m_path, [f for f in os.listdir(m_path) if f.endswith('.gguf')][0])
-        except: 
-            return None
-
-    def generate(self, prompt):
-        # [Mode Switching Logic]
-        if CONFIG["mode"] == "remote":
-            return self._generate_remote(prompt)
-        else:
-            return self._generate_local(prompt)
-
-    def _generate_local(self, prompt):
-        if not self.bin or not self.model: 
-            return "Error: Local Engine or Model file is missing."
-        
-        # Core command for llama-cli
-        cmd = [self.bin, "-m", self.model, "-p", f"User: {prompt}\nAssistant:", "-n", "512", "--log-disable", "-ngl", "999"]
-        try:
-            res = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace')
-            return res.stdout.split("Assistant:")[-1].strip()
-        except Exception as e: 
-            return f"Local Engine Error: {e}"
-
-    def _generate_remote(self, prompt):
-        data = json.dumps({
-            "model": CONFIG["model_name"],
-            "messages": [{"role": "user", "content": prompt}]
-        }).encode()
-        
-        req = urllib.request.Request(CONFIG["api_url"], data=data, method='POST')
-        req.add_header('Content-Type', 'application/json')
-        req.add_header('Authorization', f'Bearer {CONFIG["api_key"]}')
+        # Command for llama.cpp (compatible with most GGUF runners)
+        cmd = [
+            driver,
+            "-m", config['model_path'],
+            "-p", f"{config['system_prompt']} User: {prompt} Assistant:",
+            "-n", "1024",
+            "-ngl", str(config['gpu_layers']),
+            "-c", str(config['ctx_size']),
+            "-t", str(config['threads']),
+            "--temp", "0.7"
+        ]
         
         try:
-            with urllib.request.urlopen(req, timeout=15) as r:
-                res = json.loads(r.read().decode())
-                return res['choices'][0]['message']['content']
-        except Exception as e: 
-            return f"Remote API Error: {e} (Please check your API Key or Network)"
+            # Start process with piped stdout
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL, # Hide system logs
+                text=True,
+                encoding='utf-8',
+                bufsize=1
+            )
+            
+            # Read output character by character/line
+            for line in process.stdout:
+                yield line
+                
+            process.wait()
+            
+        except Exception as e:
+            yield f"[Local Inference Error] {e}"
 
-core = HybridCore()
+    else:
+        # [API MODE] - Simulation
+        response = f"[API Mode] Echo: {prompt}"
+        for char in response:
+            time.sleep(0.05) # Simulate typing
+            yield char
 
-class VoidHandler(BaseHTTPRequestHandler):
-    def _send_json(self, data):
-        self.send_response(200)
-        self.send_header('Content-type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-        self.wfile.write(json.dumps(data).encode())
+# ==========================================
+# [MODULE 3] API SERVER (Background Daemon)
+# ==========================================
+class ThreadedHTTPServer(ThreadingMixIn, http.server.HTTPServer):
+    daemon_threads = True
+
+class VoidHandler(http.server.BaseHTTPRequestHandler):
+    def log_message(self, format, *args):
+        return  # Silence server logs
 
     def do_POST(self):
-        content_len = int(self.headers.get('Content-Length', 0))
-        body = json.loads(self.rfile.read(content_len).decode())
+        # OpenAI Compatible Endpoint
+        if self.path == '/v1/chat/completions':
+            content_len = int(self.headers.get('Content-Length', 0))
+            post_body = self.rfile.read(content_len).decode('utf-8')
+            data = json.loads(post_body)
+            
+            user_msg = "Hello"
+            if "messages" in data:
+                user_msg = data["messages"][-1]["content"]
 
-        if self.path == '/chat':
-            reply = core.generate(body.get('prompt', ''))
-            self._send_json({"reply": reply})
-            
-        elif self.path == '/config': # Configuration Update API
-            CONFIG.update(body)
-            self._send_json({"status": "updated", "current_mode": CONFIG["mode"]})
-            
-        else: 
+            # Collect full response for API (Non-streaming for HTTP simplicity in v1.0)
+            full_response = ""
+            for chunk in stream_inference(user_msg):
+                full_response += chunk
+
+            response = {
+                "id": "chatcmpl-void-v1",
+                "object": "chat.completion",
+                "created": int(time.time()),
+                "model": config['model_path'],
+                "choices": [{
+                    "index": 0,
+                    "message": {"role": "assistant", "content": full_response},
+                    "finish_reason": "stop"
+                }]
+            }
+
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(response).encode('utf-8'))
+        else:
             self.send_error(404)
 
-    def do_GET(self):
-        if self.path == '/':
-            self.send_response(200)
-            self.send_header('Content-type', 'text/html; charset=utf-8')
-            self.end_headers()
-            self.wfile.write(self.get_ui().encode())
+def start_server():
+    global server_status
+    try:
+        server = ThreadedHTTPServer(('0.0.0.0', 8000), VoidHandler)
+        thread = threading.Thread(target=server.serve_forever)
+        thread.daemon = True
+        thread.start()
+        server_status = "Online (Port 8000)"
+    except Exception as e:
+        server_status = f"Failed: {e}"
 
-    def get_ui(self):
-        return f"""<!DOCTYPE html><html><head><title>VOID HYBRID</title><meta name="viewport" content="width=device-width,initial-scale=1">
-        <style>
-            body{{background:#000;color:#0f0;font-family:monospace;padding:20px;line-height:1.6}} 
-            button{{background:#0f0;border:none;cursor:pointer;padding:8px 15px;margin:5px;font-weight:bold;transition:0.3s}}
-            button:hover{{background:#fff}}
-            #log{{border:1px solid #333;height:400px;overflow-y:auto;padding:15px;margin:15px 0;background:#050505}}
-            input{{width:75%;background:#111;color:#0f0;border:1px solid #0f0;padding:12px;outline:none}}
-        </style>
-        </head><body>
-        <h2>🌑 VOID HYBRID CHASSIS v22.0</h2>
-        <div style="border:1px solid #333; padding:10px; display:inline-block">
-            <strong>ENGINE MODE:</strong> 
-            <button onclick="setMode('local')">LOCAL (GGUF)</button>
-            <button onclick="setMode('remote')">REMOTE (API)</button>
-        </div>
-        <div id="log"></div>
-        <div style="display:flex; gap:10px">
-            <input id="i" onkeypress="if(event.key=='Enter')send()" placeholder="Type your command here...">
-            <button onclick="send()" style="width:20%">SEND</button>
-        </div>
-        <script>
-            async function setMode(m){{ 
-                await fetch('/config', {{method:'POST', body:JSON.stringify({{mode:m}})}}); 
-                alert('System Mode Switched to: ' + m.toUpperCase()); 
-            }}
-            async function send(){{
-                const i=document.getElementById('i'), l=document.getElementById('log'), v=i.value.trim(); 
-                if(!v)return;
-                l.innerHTML += '<div style="color:#aaa">> '+v+'</div>'; 
-                i.value='';
-                l.scrollTop=l.scrollHeight;
-                
-                try {{
-                    const r = await fetch('/chat', {{method:'POST', body:JSON.stringify({{prompt:v}})}});
-                    const d = await r.json(); 
-                    l.innerHTML += '<div style="margin-bottom:10px">AI: '+d.reply+'</div>';
-                }} catch(e) {{
-                    l.innerHTML += '<div style="color:red">ERROR: Connection Failed</div>';
-                }}
-                l.scrollTop=l.scrollHeight;
-            }}
-        </script></body></html>"""
+# ==========================================
+# [MODULE 4] TUI MENUS
+# ==========================================
+def menu_chat():
+    cls()
+    print(f"💬 VOID CHAT [{config['mode'].upper()}]")
+    print("="*60)
+    print("Type 'exit' to return. (Streaming Enabled)")
+    
+    while True:
+        prompt = input("\nYou >> ")
+        if prompt.lower() == 'exit': break
+        
+        print("VOID >> ", end='', flush=True)
+        
+        # Real-time Streaming Output
+        full_text = ""
+        for chunk in stream_inference(prompt):
+            print(chunk, end='', flush=True)
+            full_text += chunk
+        print() # Newline at end
+
+def menu_settings():
+    while True:
+        cls()
+        print(f"⚙️  SETTINGS MANAGER")
+        print("="*60)
+        print(f"1. Model Path   : {config['model_path']}")
+        print(f"2. Driver Path  : {config['driver_path']}")
+        print(f"3. GPU Layers   : {config['gpu_layers']}")
+        print(f"4. Threads      : {config['threads']}")
+        print(f"5. Mode         : {config['mode']}")
+        print("-" * 60)
+        print("Select number to edit, or 'q' to return.")
+        
+        sel = input("\nSelect >> ").strip().lower()
+        if sel == 'q': break
+
+        if sel == '1': config['model_path'] = input("New Path >> ")
+        elif sel == '2': config['driver_path'] = input("New Driver Path >> ")
+        elif sel == '3': config['gpu_layers'] = int(input("GPU Layers (int) >> "))
+        elif sel == '4': config['threads'] = int(input("CPU Threads (int) >> "))
+        elif sel == '5': config['mode'] = input("Mode (local/api) >> ")
+        
+        save_config()
+
+def menu_market():
+    # In v1.0, this is a placeholder for the decentralized plugin system
+    plugins = [
+        {"name": "WebSearch", "desc": "Live Internet Access", "file": "search.py"},
+        {"name": "CodeInterpreter", "desc": "Python Execution Box", "file": "sandbox.py"},
+    ]
+    
+    while True:
+        cls()
+        print(f"🛒 PLUGIN MARKET")
+        print("="*60)
+        for i, p in enumerate(plugins):
+            status = "[INSTALLED]" if os.path.exists(f"plugins/{p['file']}") else "[ ]"
+            print(f"{i+1}. {status} {p['name']} : {p['desc']}")
+        
+        print("\n[Q] Return to Main Menu")
+        sel = input("Select >> ").strip().lower()
+        if sel == 'q': break
+        
+        print("\n[System] Connecting to repository...")
+        time.sleep(1)
+        print("[System] Download feature will be enabled in v1.1 update.")
+        time.sleep(1)
+
+# ==========================================
+# [MAIN] ENTRY POINT
+# ==========================================
+def main():
+    load_config()
+    start_server()
+    
+    while True:
+        cls()
+        print(f"""
+██    ██  ██████  ██  ██████  
+██    ██ ██    ██ ██  ██   ██ 
+██    ██ ██    ██ ██  ██   ██ 
+ ██  ██  ██    ██ ██  ██   ██ 
+  ████    ██████  ██  ██████  {VERSION}
+
+[ Server: {server_status} ] [ Mode: {config['mode'].upper()} ]
+============================================================
+1. 💬 Chat (Streaming)
+2. ⚙️  Settings
+3. 🛒 Plugin Market
+4. 🔌 Server Logs
+Q. Quit
+============================================================
+""")
+        choice = input("Menu >> ").strip().lower()
+        
+        if choice == '1': menu_chat()
+        elif choice == '2': menu_settings()
+        elif choice == '3': menu_market()
+        elif choice == '4': input("\nServer is running quietly. Press Enter to return.")
+        elif choice == 'q':
+            print("Shutting down system...")
+            sys.exit(0)
 
 if __name__ == "__main__":
-    ip = socket.gethostbyname(socket.gethostname())
-    print(f" [🌑] VOID HYBRID ONLINE | http://{ip}:{PORT}")
-    print(f" [⚙️] Mode: {CONFIG['mode'].upper()} | Standard OpenAI API Compatible")
-    
-    try:
-        HTTPServer(('0.0.0.0', PORT), VoidHandler).serve_forever()
-    except KeyboardInterrupt:
-        print("\n [!] Shutting down VOID Chassis...")
+    main()
