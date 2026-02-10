@@ -1,3 +1,9 @@
+## 📜 License
+
+Distributed under the **MIT License**. See `LICENSE` for more information.
+
+> **"Free to use, Free to modify. Just keep the credit."**
+
 VOID: The Universal AI Chassis
 "VOID is not an AI.
 It’s the structure that lets you build one."
@@ -132,3 +138,4 @@ Even if VOID itself doesn’t make money, ecosystems always do.
 One Sentence Summary
 VOID is not an AI.
 It’s the structure that lets you build one.
+
