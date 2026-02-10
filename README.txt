@@ -1,237 +1,134 @@
-VOID
+VOID: The Universal AI Chassis
+"VOID is not an AI.
+It’s the structure that lets you build one."
 
-VOID is a chassis for running AI engines — not an engine itself.
+VOID is a zero-dependency, single-file execution chassis for AI inference.
 
-VOID provides a minimal, transparent structure for running local GGUF models or switching to remote APIs using a single, consistent interface. It is designed to stay out of the way and expose control rather than hide it.
+It is designed to provide a minimal, transparent structure for running local GGUF models or switching to remote APIs using a consistent interface. VOID stays still — so the rest can move freely.
+
+🚀 Quick Start
+VOID is a single-file application that automatically bootstraps its own environment.
+# 1. Get the chassis
+git clone https://github.com/KapitalSP/VOID
+cd VOID
+
+# 2. Ignite (No pip install required)
+python void.py
+
+💻 Cross-Platform Compatibility
+VOID is written in Pure Python Standard Library, making it inherently OS-agnostic.
+The chassis automatically detects the host environment and adapts its logic accordingly.
+OS,     VOID Behavior,                                     User Responsibility
+Windows,"Auto-detects .exe extensions, handles \ paths.",Drop llama-cli.exe in drivers/
+Linux / macOS, "Uses standard POSIX paths, compatible with Shell.",Drop llama-cli binary in drivers/
+Android (Termux),Runs natively on mobile Python. Zero overhead.,Drop arm64 binary in drivers/
+The Code stays the same. You only need to provide the correct binary for your OS.
 
 What is VOID?
-
 VOID is a zero-friction execution chassis for AI inference.
 
 It does not train models, does not modify inference logic, and does not attempt to optimize performance by itself. Instead, it focuses on:
 
-Detecting available engines automatically
+Detecting available engines automatically.
 
-Providing a stable execution structure
+Providing a stable execution structure via a simple TUI and API.
 
-Allowing local and remote inference to coexist
+Allowing local and remote inference to coexist.
 
-Avoiding heavy abstractions and hidden behavior
+Avoiding heavy abstractions and hidden behavior.
 
 Think of VOID as the frame that holds the engine — not the engine.
 
 Why VOID Exists
-
 Most AI tooling today assumes one of two extremes:
 
-Beginner-friendly tools that hide all internals
+Beginner-friendly tools that hide all internals.
 
-Large frameworks that require deep integration
+Large frameworks that require deep integration.
 
-VOID exists for users who want neither.
+VOID exists for users who want neither. It is built for people who:
 
-It is built for people who:
+Understand what an engine is.
 
-Understand what an engine is
+Want direct control over execution.
 
-Want direct control over execution
+Prefer simple, inspectable code (100% Python).
 
-Prefer simple, inspectable code
-
-Intend to build their own systems on top
+Intend to build their own systems on top.
 
 VOID does not try to be convenient for everyone. It tries to be honest for the right users.
 
-Who Is This For?
-
-VOID is not designed for AI beginners.
-
-This project assumes you already:
-
-Know what GGUF models are
-
-Understand local inference vs API-based inference
-
-Are comfortable configuring engines and models manually
-
-If you can already assemble your own AI stack, VOID gives you a clean base to do it faster and more transparently.
-
-What VOID Is NOT
-
-VOID is not:
-
-an AI model
-
-an inference engine
-
-a performance optimizer
-
-a replacement for llama.cpp or hosted APIs
-
-VOID does not improve model quality. VOID does not magically speed things up.
-
-If something is slow in VOID, it would be slow elsewhere too.
-
-Performance Notes
-
-VOID itself does not optimize inference speed or model performance.
-
-All performance characteristics depend on:
-
-the selected engine (e.g. llama.cpp or a remote API)
-
-the chosen model architecture and size
-
-the underlying hardware
-
-VOID’s role is to:
-
-expose engine parameters clearly
-
-avoid hidden abstraction layers
-
-allow direct performance control
-
-VOID does not promise performance. It promises transparency.
-
 Core Features
+Single-File Architecture: Just void.py. No complex installation.
 
-Local GGUF inference via llama.cpp
+Local GGUF inference: Via llama.cpp or compatible binaries.
 
-Remote API mode (OpenAI-compatible)
+Remote API mode: OpenAI-compatible endpoint support.
 
-Runtime switching between local and remote modes
+Runtime Switching: Hot-swap between Local and Remote modes via TUI.
 
-Minimal dependency footprint
-
-Simple HTTP API for integration
-
-Mobile-friendly (Termux / Android)
+Simple HTTP API: Background server for external integration.
 
 Architecture Overview
+Engine layer: External binaries (llama.cpp, API providers).
 
-Engine layer: external (llama.cpp, API providers)
+Model layer: User-supplied files (GGUF or remote keys).
 
-Model layer: user-supplied (GGUF or remote)
-
-VOID layer: execution chassis and interface
+VOID layer: Execution chassis and interface.
 
 VOID intentionally avoids merging these layers.
 
-Basic Usage
-
-Place a GGUF model in the models/ directory
-
-Place the engine binary in drivers/ or ensure it is in PATH
-
-Run the server
-
-Access the UI or call the HTTP API
-
-Remote mode can be enabled by updating the configuration.
-
 Design Philosophy
+Simple code over clever code.
 
-Simple code over clever code
+Explicit control over automation.
 
-Explicit control over automation
+No silent behavior.
 
-No silent behavior
-
-No unnecessary abstractions
-
-VOID is meant to be modified. If you want to change it, you probably should.
-
-Final Notes
-
-VOID is a chassis.
+No unnecessary abstractions.
 
 Engines evolve. Models change. Hardware improves.
-
 VOID stays still — so the rest can move freely.
-Place .gguf model files in /models
 
-Place llama-cli binary in /drivers
+Performance Notes
+VOID itself does not optimize inference speed.
+If something is slow in VOID, it would be slow elsewhere too.
 
-Run VOID
+All performance characteristics depend on:
 
-Use local inference immediately
+The selected engine (e.g., llama-cli).
 
-Remote Mode
+The chosen model architecture and size.
 
-Set your API key
+The underlying hardware.
 
-Switch mode via /config
+VOID’s role is to expose engine parameters clearly (e.g., GPU Layers, Threads) and avoid hidden abstraction layers.
+VOID does not promise performance. It promises transparency.
 
-Use standard API-based inference
+📜 BASIC vs. VOID
+VOID is built upon the architecture of BASIC.
+It inherits the core stability of BASIC but is re-engineered for personal use.
+Feature,BASIC (The Foundation),VOID (The Adaptation)
+Role,Server Infrastructure,Personal Chassis
+Architecture,Multi-process / Cluster-ready,Single-process / Local-first
+UX,Raw & Headless Automation,Interactive TUI / Hybrid
+Status,Industrial / Heavy,Consumer / Lightweight
 
-The interface stays the same.
-Only the engine changes.
-
-Design Philosophy
-
-Engines evolve
-→ The chassis must remain stable.
-
-Personal computing upper bound ≈ 100B
-→ Designed to be practical for individuals, not data centers.
-
-Loose but scalable
-→ Stable by default, modifiable for those who want to push limits.
-
-VOID is intentionally relaxed in structure —
-so others can “overbuild” it if they want.
-
-BASIC vs VOID
-
-BASIC
-
-Server-grade
-
-Large-scale
-
-Heavy and rigid
-
-Not publicly released
-
-VOID
-
-Personal / local-first
-
-Hybrid execution
-
-Lightweight and open
-
-Built to be shared
-
-VOID is a derivative of BASIC,
-refactored into a usable public chassis.
+"VOID is BASIC, stripped down to fit on your desk."
 
 Market & Community
-
-VOID is not meant to stay isolated.
+VOID is not meant to stay isolated. The structure is intentionally relaxed so others can "overbuild" it.
 
 The long-term idea is:
 
-shared presets
+Shared presets (config.json).
 
-plugins
+Plugins (via the built-in Market menu).
 
-configurations
+Configurations for specific hardware.
 
-markets built around the chassis
-
-Even if VOID itself doesn’t make money,
-ecosystems always do.
-
-Quick Start
-git clone https://github.com/KapitalSP/VOID
-cd VOID
-python void.py
-
+Even if VOID itself doesn’t make money, ecosystems always do.
 
 One Sentence Summary
-
 VOID is not an AI.
 It’s the structure that lets you build one.
-
