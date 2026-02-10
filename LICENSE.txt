@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 VOID Project
+Copyright (c) 2026 KapitalSP
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,27 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+--------------------------------------------------------------------------------
+[ADDENDUM: THE SOVEREIGN PROTOCOLS]
+
+This software ("BASIC Infrastructure" & "VOID Interface") is architected with
+specific philosophies. While the MIT License governs the legal use, the following
+protocols define the spirit of this architecture:
+
+1. ATTRIBUTION (The Origin)
+   When using this software for commercial or derivative works, you agree to
+   retain the original copyright notice ("KapitalSP") within the source code
+   or documentation. You must acknowledge the architect.
+
+2. SOVEREIGNTY (Ownership)
+   Any AI agents, models, or executables manufactured using the 'Factory Mode'
+   of this software are the sole property of the Operator (User). The Architect
+   claims no ownership over your created intelligence.
+
+3. RESPONSIBILITY (Zero Liability)
+   We provide the engine; you steer the car. The Architect bears no responsibility
+   for the outcomes of your usage, whether strictly legal or ethical.
+   
+   > "Stop Renting Intelligence. Own It."
+--------------------------------------------------------------------------------
