@@ -1,12 +1,43 @@
-# Copyright 2026 R2 (KapitalSP)
-# Licensed under the Apache License, Version 2.0 (the "License");
+# Copyright (c) 2026 KapitalSP
+# Licensed under the Apache License, Version 2.0
+#
+# VOID: The Universal AI Chassis (v1.6.0 - Master Edition)
+# Features: Thread-Safe Memory, Residual Logging, Pre-flight Sweep, Matrix UI
 
-import os, sys, json, time, subprocess, threading, http.server, platform, zlib, struct
-from socketserver import ThreadingMixIn
+import os
+import sys
+import io
+import time
+import platform
+import threading
+import glob
 
-# ==============================================================================
-# 🛡️ KAPITAL SENTINEL [SMART RESOURCE GUARD]
-# ==============================================================================
+# ==========================================
+# 🛡️ [PATCH] Prevent Windows Encoding Crash
+# ==========================================
+if sys.stdout.encoding.lower() != 'utf-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+
+# ==========================================
+# 🧹 [PATCH] Pre-flight Sweep (Cleanup)
+# ==========================================
+def pre_flight_sweep():
+    """Clears out orphaned temp files left from power outages or hard crashes."""
+    temp_files = glob.glob(".temp_p_*.txt")
+    for f in temp_files:
+        try: os.remove(f)
+        except: pass
+
+pre_flight_sweep()
+
+# 1. Engine Transplant (BASIC Engine)
+try:
+    from basic_engine import BasicEngine
+except ImportError:
+    print("\n[CRITICAL ERROR] basic_engine.py not found in the current directory.")
+    sys.exit(1)
+
+# 2. Resource Guard (Kapital Sentinel)
 try: 
     import psutil
     HAS_DEPS = True
@@ -14,6 +45,7 @@ except ImportError:
     HAS_DEPS = False
 
 class KapitalSentinel:
+    """Smart Resource Guard: CPU Affinity & Health Monitoring"""
     def __init__(self, role="worker"):
         self.os = platform.system()
         self.ignite(role)
@@ -22,7 +54,8 @@ class KapitalSentinel:
         if not HAS_DEPS: return
         try:
             p = psutil.Process(os.getpid())
-            if self.os == "Windows": p.nice(psutil.HIGH_PRIORITY_CLASS)
+            if self.os == "Windows": 
+                p.nice(psutil.HIGH_PRIORITY_CLASS)
             else: 
                 try: p.nice(-10)
                 except: pass
@@ -36,82 +69,149 @@ class KapitalSentinel:
         except: pass
 
     def check_health(self):
-        """Monitors RAM and Thermals to prevent system lag."""
+        """Monitors RAM to prevent system freeze during inference."""
         if not HAS_DEPS: return
         try:
             if psutil.virtual_memory().percent > 90:
-                print("\n [🚨] SYSTEM OVERLOAD: RAM usage > 90%. Cooling down...")
+                print("\033[91m\n [🚨 SYSTEM OVERLOAD] RAM usage > 90%. Cooling down...\033[0m", end="")
                 time.sleep(2)
         except: pass
 
+# ==========================================
+# 🧠 [CORE] Hybrid Memory Module (VoidMemory)
+# ==========================================
+class VoidMemory:
+    """Thread-Safe, Overflow-Proof Hybrid Memory Module"""
+    def __init__(self, system_prompt, max_context_chars=1500, log_dir="logs"):
+        # Secure pathing and automatic folder creation
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir, exist_ok=True)
+        self.log_file = os.path.join(log_dir, f"void_blackbox_{int(time.time())}.log")
+        
+        self.system_prompt = f"<|start_header_id|>system<|end_header_id|>\n\n{system_prompt}<|eot_id|>"
+        self.short_term = []
+        # Tightly set to 1500 characters to prevent token inflation
+        self.max_chars = max_context_chars 
+        self.current_chars = 0
+        self.memory_lock = threading.Lock()
+
+    def add_residual(self, role, text):
+        formatted_turn = f"<|start_header_id|>{role}<|end_header_id|>\n\n{text}<|eot_id|>"
+        turn_length = len(formatted_turn)
+
+        with self.memory_lock:
+            self.short_term.append(formatted_turn)
+            self.current_chars += turn_length
+            
+            while self.current_chars > self.max_chars and len(self.short_term) > 1:
+                removed_turn = self.short_term.pop(0)
+                self.current_chars -= len(removed_turn)
+
+            try:
+                # Append residual data at O(1) speed (Zero Bottleneck)
+                with open(self.log_file, "a", encoding="utf-8") as f:
+                    f.write(f"[{role.upper()}]: {text}\n")
+            except Exception:
+                pass
+
+    def build_prompt(self):
+        with self.memory_lock:
+            history = "".join(self.short_term)
+            return f"{self.system_prompt}\n{history}\n<|start_header_id|>assistant<|end_header_id|>\n\n"
+
+# ==========================================
+# 💻 [UI] Matrix CLI Renderer
+# ==========================================
+VERSION = "v1.6.0 (Master Edition)"
 sentinel = KapitalSentinel("worker") 
 
-# ==========================================
-# [CORE] VOID LOGIC
-# ==========================================
-VERSION = "v1.5.0 (Global Stable)"
-CONFIG_FILE = "config.json"
+C_GREEN = "\033[92m"
+C_DIM = "\033[2m"
+C_ALERT = "\033[91m"
+C_RESET = "\033[0m"
 
-def load_config():
-    for f in ["models", "drivers", "plugins"]: os.makedirs(f, exist_ok=True)
-    if not os.path.exists(CONFIG_FILE):
-        cfg = {"model_path": "models/llama-3-8b.gguf", "driver_path": "drivers/llama-cli", "gpu_layers": 33, "threads": 6}
-        with open(CONFIG_FILE, 'w') as f: json.dump(cfg, f, indent=4)
-        return cfg
-    with open(CONFIG_FILE) as f: return json.load(f)
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
-def stream_inference(prompt, cfg):
-    driver = cfg['driver_path']
-    if os.name == 'nt' and not driver.endswith('.exe'): driver += ".exe"
-    if not os.path.exists(driver): yield "[Error] llama-cli driver missing."; return
+def matrix_print(text, delay=0.01):
+    for char in text:
+        sys.stdout.write(char)
+        sys.stdout.flush()
+        time.sleep(delay)
+    print()
 
-    cmd = [driver, "-m", cfg['model_path'], "-p", f"User: {prompt}\nAI:", "-n", "1024", "-ngl", str(cfg['gpu_layers']), "--log-disable"]
+def start_chat(engine):
+    clear_screen()
+    print(f"{C_GREEN}=========================================={C_RESET}")
+    matrix_print(f"{C_GREEN} INITIALIZING NEURAL LINK WITH MEMORY... [OK]{C_RESET}", 0.02)
+    print(f"{C_GREEN} TYPE 'exit' TO SEVER CONNECTION.{C_RESET}")
+    print(f"{C_GREEN}=========================================={C_RESET}\n")
     
-    try:
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, encoding='utf-8', bufsize=1)
-        for line in process.stdout:
-            sentinel.check_health() 
-            yield line
-        process.wait()
-    except Exception as e: yield f"[Inference Error] {e}"
-
-def menu_market():
+    system_prompt = "You are VOID, a highly efficient industrial AI assistant powered by KapitalSP."
+    memory = VoidMemory(system_prompt=system_prompt)
+    
     while True:
-        os.system('cls' if os.name=='nt' else 'clear')
-        print(" 🛒 VOID PLUGIN MARKET")
-        print(" ==========================================")
-        print(" 1. WebSearch Pro  [Free]")
-        print(" 2. Python Sandbox [Free]")
-        print(" [Q] Back to Menu")
-        sel = input("\n Select Plugin to Install > ").lower()
-        if sel == 'q': break
-        print(" [i] Connecting to repository...")
-        time.sleep(1)
-        print(" [!] This version of VOID is standalone. Remote market coming in v2.0.")
-        time.sleep(1.5)
+        try:
+            user_input = input(f"{C_GREEN}[USER] >> {C_RESET}")
+            if user_input.lower() in ['exit', 'quit']: 
+                matrix_print(f"{C_DIM} Severing connection...{C_RESET}")
+                time.sleep(0.5)
+                break
+            if not user_input.strip(): continue
+
+            # 1. Record residual & Assemble context
+            memory.add_residual("user", user_input)
+            full_context = memory.build_prompt()
+
+            print(f"{C_GREEN}[VOID] >> {C_RESET}", end='', flush=True)
+            
+            ai_response = ""
+            
+            # 2. Engine output & Real-time filtering
+            for chunk in engine.generate(full_context):
+                sentinel.check_health()
+                
+                # [PATCH] Clean UI Artifacts
+                clean_chunk = chunk.replace("<|eot_id|>", "").replace("<|start_header_id|>", "")
+                if clean_chunk:
+                    sys.stdout.write(f"{C_GREEN}{clean_chunk}{C_RESET}")
+                    sys.stdout.flush()
+                    ai_response += clean_chunk
+                    
+            print("\n")
+            
+            # 3. Pass completed response to memory
+            if ai_response.strip():
+                memory.add_residual("assistant", ai_response.strip())
+                
+        except KeyboardInterrupt:
+            # [PATCH] Graceful Defense against Panic Switch (Ctrl+C)
+            print(f"{C_RESET}\n\n[!] Forced interrupt detected. Protecting runtime and severing connection.")
+            time.sleep(1)
+            break
 
 def main():
-    cfg = load_config()
+    clear_screen()
+    matrix_print(f"{C_GREEN} Waking up BASIC Engine...{C_RESET}", 0.03)
+    engine = BasicEngine()
+    
     while True:
-        os.system('cls' if os.name=='nt' else 'clear')
-        print(f" 🌌 VOID {VERSION}")
-        print(" ------------------------------------------")
-        print(" 1. 💬 Start Chat")
-        print(" 2. ⚙️  Settings")
-        print(" 3. 🛒 Plugin Market")
-        print(" Q. Quit")
-        print(" ------------------------------------------")
-        sel = input(" Selection > ").lower()
+        clear_screen()
+        print(f"{C_GREEN}=========================================={C_RESET}")
+        print(f"{C_GREEN} 🌌 VOID {VERSION}{C_RESET}")
+        print(f"{C_GREEN}=========================================={C_RESET}")
+        print(f"{C_GREEN} [1] 💬 ESTABLISH CONNECTION (CHAT){C_RESET}")
+        print(f"{C_GREEN} [2] ⚙️  SYSTEM SETTINGS (LOCKED){C_RESET}")
+        print(f"{C_GREEN} [3] 🛒 PLUGIN MARKET (LOCKED){C_RESET}")
+        print(f"{C_GREEN} [Q] SYSTEM SHUTDOWN{C_RESET}")
+        print(f"{C_GREEN}------------------------------------------{C_RESET}")
         
-        if sel == '1':
-            print("\n [Type 'exit' to return to menu]")
-            while True:
-                p = input("\n You >> ")
-                if p.lower() in ['exit', 'quit']: break
-                print(" VOID >> ", end='', flush=True)
-                for chunk in stream_inference(p, cfg): print(chunk, end='', flush=True)
-                print()
-        elif sel == '3': menu_market()
-        elif sel == 'q': sys.exit()
+        sel = input(f"{C_GREEN} COMMAND >> {C_RESET}").lower()
+        
+        if sel == '1': start_chat(engine)
+        elif sel == 'q':
+            matrix_print(f"{C_GREEN} SYSTEM SHUTTING DOWN...{C_RESET}", 0.05)
+            sys.exit()
 
-if __name__ == "__main__": main()
+if __name__ == "__main__":
+    main()
